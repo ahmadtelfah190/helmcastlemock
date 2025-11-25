@@ -1,0 +1,12 @@
+apiVersion: v2
+appVersion: latest
+description: Castlemock webapp chart
+home: https://github.com/castlemock/castlemock
+maintainers:
+- email: maintainers@cnieg.fr
+  name: CNIEG
+name: castlemock
+sources:
+- https://github.com/cnieg/helm-charts/tree/master/charts/castlemock
+type: application
+version: 2.0.1
