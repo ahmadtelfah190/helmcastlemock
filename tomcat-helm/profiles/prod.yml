@@ -1,0 +1,17 @@
+# PROD Profile
+profile: prod
+
+prod:
+  replicaCount: 3
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  javaOpts: "-Xmx1024m -Xms512m -Denv=prod"
+  logLevel: "INFO"
+
+secrets:
+  apiKey: "prod-api-key"

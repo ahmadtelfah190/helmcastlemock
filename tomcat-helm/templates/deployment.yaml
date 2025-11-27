@@ -1,0 +1,75 @@
+{{- $profile := include "tomcat-app.profile" . | fromYaml }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tomcat-app.fullname" . }}
+  labels:
+    app: {{ include "tomcat-app.name" . }}
+    profile: {{ .Values.profile }}
+spec:
+  replicas: {{ $profile.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "tomcat-app.name" . }}
+      profile: {{ .Values.profile }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "tomcat-app.name" . }}
+        profile: {{ .Values.profile }}
+    spec:
+      containers:
+      - name: tomcat
+        image: "{{ .Values.global.image.repository }}:{{ .Values.global.image.tag }}"
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 8443
+          name: https
+        env:
+        - name: JAVA_OPTS
+          value: "{{ $profile.javaOpts }}"
+        - name: ENV_TYPE
+          value: "{{ .Values.profile | upper }}"
+        - name: LOG_LEVEL
+          value: "{{ $profile.logLevel }}"
+        - name: SSL_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "tomcat-app.fullname" . }}-secrets
+              key: keystore-password
+        - name: PROBE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "tomcat-app.fullname" . }}-secrets
+              key: probe-username
+        - name: PROBE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "tomcat-app.fullname" . }}-secrets
+              key: probe-password
+        resources:
+          {{- toYaml $profile.resources | nindent 12 }}
+        volumeMounts:
+        - name: tomcat-config
+          mountPath: /usr/local/tomcat/conf/server.xml
+          subPath: server.xml
+        # livenessProbe:
+        #   httpGet:
+        #     path: /probe
+        #     port: 8080
+        #   initialDelaySeconds: 10
+        #   periodSeconds: 10
+        #   failureThreshold: 3
+        # readinessProbe:
+        #   httpGet:
+        #     path: /probe  
+        #     port: 8080
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 5
+        #   failureThreshold: 3
+      volumes:
+      - name: tomcat-config
+        configMap:
+          name: {{ include "tomcat-app.fullname" . }}-config
